@@ -23,6 +23,7 @@ public class BullyPeer implements PeerInterface{
     int leaderID;
     boolean amILeader = false;
     boolean haveDeclaredMyself = false;
+    boolean haveStartedElection = false;
     //record message metrics
     int numMessagesSent = 0;
     // for measuring time taken from initiation to final coordination message
@@ -143,8 +144,6 @@ public class BullyPeer implements PeerInterface{
 
     // connects to neighbors and fills in neighborStubs
     public boolean connect(String[] neighborIPs){
-        
-        
         try{
             for (int i = 0; i < neighborIPs.length; i++){
                 if (i != myID){ //connect to all but myself
@@ -189,7 +188,12 @@ public class BullyPeer implements PeerInterface{
                         // record start time
                         p.startTime = System.currentTimeMillis();
                         System.out.println("Start time: " + p.startTime);
-                        p.sendElection();
+                        synchronized(p){
+                            if (!(p.haveStartedElection)){ // make sure I only send out one election message
+                                p.haveStartedElection = true;
+                                p.sendElection();
+                            }
+                        }   
                     }
                 }
                 else{ System.out.println("Sorry, I don't understand that");}
@@ -221,7 +225,12 @@ public class BullyPeer implements PeerInterface{
             // if I have a higher # than the sender, send Reply and begin an election
             if (myID > senderID){
                 sendReply(senderID);
-                sendElection();
+                synchronized(this){
+                    if (!haveStartedElection){ // make sure I only send out one election message
+                        haveStartedElection = true;
+                        sendElection();
+                    }
+                }  
             }
         }
     }
