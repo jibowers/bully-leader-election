@@ -88,9 +88,11 @@ public class BullyPeer implements PeerInterface{
                     // if not, I am leader and send out coordination message
                     amILeader = true;
                     leaderID = myID;
-                    if (!haveDeclaredMyself){ // make sure I only send out one coordination message
-                        synchronized(this){haveDeclaredMyself = true;}//might have to lock this!
-                        sendCoordination();
+                    synchronized(this){
+                        if (!haveDeclaredMyself){ // make sure I only send out one coordination message
+                            haveDeclaredMyself = true;
+                            sendCoordination();
+                        }
                     }
                 }
 
