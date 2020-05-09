@@ -1,0 +1,220 @@
+import java.util.Hashtable;
+import java.util.Vector;
+import java.util.concurrent.locks.Lock;
+import java.net.MalformedURLException;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.rmi.registry.*;
+import java.util.Scanner;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.*;
+import java.util.concurrent.*;
+
+
+public class BullyPeer implements PeerInterface{
+    // instance variables
+
+    String[] allIPs; // THIS NEEDS TO BE SET, and it's the same for all nodes
+
+    int myID;
+    // information about the leader
+    int leaderID;
+    boolean amILeader = false;
+    //record message metrics
+    int numMessagesSent = 0;
+    // for measuring time taken from initiation to final coordination message
+    long startTime;
+    long endTime;
+    // ready-available stubs for neighbors, to be filled in during connect method
+    Hashtable<Integer, PeerInterface> neighborStubs;
+    // used for multithreading
+    private ExecutorService pool;
+
+    boolean hasReceivedReply;
+
+    //Hashtable<Integer, ReplyStatus> responseTracker; 
+
+
+    public BullyPeer(int id){
+        // constructor
+        myID = id;
+        pool = Executors.newFixedThreadPool(10);
+        // set up the responseTracker
+        /*
+        if (myID != allIPs.length - 1){ // make sure I'm not the highest node
+            for (int i = myID + 1; i < allIPs.length; i++){
+                responseTracker.put(i, new ReplyStatus()); // add to responseTracker
+            }
+        }
+        */
+        hasReceivedReply = false;
+
+    }
+
+
+    public void receiveElection(int senderID){pool.execute(new ReceiveElection(senderID));}
+    
+    public void receiveReply(){pool.execute(new ReceiveReply());}
+
+    public void receiveCoordination(int senderID){pool.execute(new ReceiveCoordination(senderID));}
+
+
+    public void sendElection(){
+        // first check if I have the highest ID
+        if (myID == allIPs.length - 1){
+            // I am the leader
+            amILeader = true;
+            leaderID = myID;
+            // send out coordination
+            sendCoordination();
+        }else{
+            // send election message to all nodes with a higher ID
+            try{
+                hasReceivedReply = false;
+                for (int i = myID + 1; i < allIPs.length; i++){
+                    System.out.println("Sending an election message to Peer " + i);
+                    neighborStubs.get(i).receiveElection(myID);
+                    // add them to waiting list
+                    //responseTracker.get(i).startWaiting(10000); // waiting time set to 10 seconds
+                    numMessagesSent ++;
+                }
+                // wait for 10 seconds then check if Peer has heard back from anyone
+                Thread.sleep(10000);
+                if (!hasReceivedReply){
+                    // if not, I am leader and send out coordination message
+                    amILeader = true;
+                    leaderID = myID;
+                    sendCoordination();
+                }
+
+            }catch(Exception e){
+                System.err.println("Thread exception: " + e.toString());
+                e.printStackTrace();
+            }
+        } 
+    }
+    
+    public void sendReply(int destID){
+        // 
+        System.out.println("Replying to Peer " + destID);
+        neighborStubs.get(destID).receiveReply();
+        numMessagesSent ++;
+    }
+
+    public void sendCoordination(){
+        for (int i = 0; i < neighborIPs.length; i++){
+            if (i != myID){ //send message to all neighbors but myself
+                System.out.println("Telling Peer " + i + " that I am the leader");
+                neighborStubs.get(i).receiveCoordination(myID);
+                numMessagesSent ++;
+            }
+        }
+    }
+
+    
+
+
+    // connects to neighbors and fills in neighborStubs
+    public boolean connect(String[] neighborIPs){
+        // this is from assignmnet 2 so it will need to be changed more
+        
+        try{
+            for (int i = 0; i < neighborIPs.length; i++){
+                if (i != myID){ //connect to all but myself
+                    Registry registry = LocateRegistry.getRegistry(neighborIPs[i]);
+                    PeerInterface stub = (PeerInterface) registry.lookup(neighborIPs[i]);
+                    neighborStubs.put(i, stub);
+                    System.out.println("connected to " + neighborIPs[i]+"!");
+                }
+            }
+        	return true;
+        } catch (Exception e){
+            System.err.println("Peer exception: " + e.toString());
+            e.printStackTrace();
+    	    return false;
+        }
+    }
+
+    public static void main(String[] args){
+        try{
+            Scanner s = new Scanner(System.in);
+
+            BullyPeer p = new BullyPeer(Integer.parseInt(args[0]));
+            PeerInterface stub = (PeerInterface) UnicastRemoteObject.exportObject(p, 0);
+            Registry registry = LocateRegistry.getRegistry();
+            registry.rebind(args[0], stub);
+
+            String input = "help";
+	        boolean connected = false;
+            while (!(input.equals("quit"))){
+                if (input.equals("help")){
+                    System.out.println("Commands:\nhelp - show this message again\nconnect - connect to your neighbors"
+                    +"\ne - elect a leader");
+                }else if(input.equals("connect")){
+                    connected = p.connect(p.allIPs);
+
+                }else if(input.equals("e")){
+        		    if (!connected){
+        		    	System.out.println("Please try to connect again");
+                    }
+                    else{
+        			//start leader election
+                        // record start time
+                        p.startTime = System.currentTimeMillis();
+                        System.out.println(p.startTime);
+                    }
+                }
+                else{ System.out.println("Sorry, I don't understand that");}
+                System.out.print(">>>");
+                input = s.nextLine().trim();
+            }
+
+            if(input.equals("quit")){
+                s.close();
+		        System.exit(0);
+            }
+
+
+        }
+        catch(Exception e){
+            System.err.println("Server exception: " + e.toString());
+            e.printStackTrace();
+        }
+    }
+
+    public class ReceiveElection implements Runnable{
+        public ReceiveElection(int senderID){}
+
+        @Override
+        public void run(){
+            // if I have a higher # than the sender, send Reply and begin an election
+            if (myID > senderID){
+                sendReply(senderID);
+                sendElection();
+            }
+        }
+    }
+    public class ReceiveReply implements Runnable{
+        public ReceiveReply(){}
+
+        @Override
+        public void run(){
+            // update responseTracker
+            //responseTracker.get(senderID).setDone();
+            // give up election 
+            hasReceivedReply = true;
+        }
+    }
+    public class ReceiveCoordination implements Runnable{
+        public ReceiveCoordination(int senderID){}
+
+        @Override
+        public void run(){
+            leaderID = senderID;
+            amILeader = false;
+            endTime = System.currentTimeMillis();
+        }
+    }
+}
