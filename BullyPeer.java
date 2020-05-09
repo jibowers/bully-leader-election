@@ -130,13 +130,13 @@ public class BullyPeer implements PeerInterface{
 
     // connects to neighbors and fills in neighborStubs
     public boolean connect(String[] neighborIPs){
-        // this is from assignmnet 2 so it will need to be changed more
+        
         
         try{
             for (int i = 0; i < neighborIPs.length; i++){
                 if (i != myID){ //connect to all but myself
                     Registry registry = LocateRegistry.getRegistry(neighborIPs[i]);
-                    PeerInterface stub = (PeerInterface) registry.lookup(neighborIPs[i]);
+                    PeerInterface stub = (PeerInterface) registry.lookup("Peer");
                     neighborStubs.put(i, stub);
                     System.out.println("connected to " + neighborIPs[i]+"!");
                 }
@@ -156,7 +156,7 @@ public class BullyPeer implements PeerInterface{
             BullyPeer p = new BullyPeer(Integer.parseInt(args[0]));
             PeerInterface stub = (PeerInterface) UnicastRemoteObject.exportObject(p, 0);
             Registry registry = LocateRegistry.getRegistry();
-            registry.rebind(args[0], stub);
+            registry.rebind("Peer", stub);
 
             String input = "help";
 	        boolean connected = false;
@@ -176,6 +176,7 @@ public class BullyPeer implements PeerInterface{
                         // record start time
                         p.startTime = System.currentTimeMillis();
                         System.out.println(p.startTime);
+                        p.sendElection();
                     }
                 }
                 else{ System.out.println("Sorry, I don't understand that");}
