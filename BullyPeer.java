@@ -70,7 +70,12 @@ public class BullyPeer implements PeerInterface{
             amILeader = true;
             leaderID = myID;
             // send out coordination
-            sendCoordination();
+            synchronized(this){
+                if (!haveDeclaredMyself){ // make sure I only send out one coordination message
+                    haveDeclaredMyself = true;
+                    sendCoordination();
+                }
+            }   
         }else{
             // send election message to all nodes with a higher ID
             try{
