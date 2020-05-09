@@ -41,6 +41,7 @@ public class BullyPeer implements PeerInterface{
         // constructor
         myID = id;
         pool = Executors.newFixedThreadPool(10);
+        neighborStubs = new Hashtable<Integer, PeerInterface>();
         // set up the responseTracker
         /*
         if (myID != allIPs.length - 1){ // make sure I'm not the highest node
