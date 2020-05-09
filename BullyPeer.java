@@ -22,6 +22,7 @@ public class BullyPeer implements PeerInterface{
     // information about the leader
     int leaderID;
     boolean amILeader = false;
+    boolean haveDeclaredMyself = false;
     //record message metrics
     int numMessagesSent = 0;
     // for measuring time taken from initiation to final coordination message
@@ -111,19 +112,22 @@ public class BullyPeer implements PeerInterface{
     }
 
     public void sendCoordination(){
-        try{
-            for (int i = 0; i < allIPs.length; i++){
-                if (i != myID){ //send message to all neighbors but myself
-                    System.out.println("Telling Peer " + i + " that I am the leader");
-                    neighborStubs.get(i).receiveCoordination(myID);
-                    numMessagesSent ++;
+            if (!haveDeclaredMyself){
+                try{
+                    for (int i = 0; i < allIPs.length; i++){
+                        if (i != myID){ //send message to all neighbors but myself
+                            System.out.println("Telling Peer " + i + " that I am the leader");
+                            neighborStubs.get(i).receiveCoordination(myID);
+                            numMessagesSent ++;
+                        }
+                    }
+                    haveDeclaredMyself = true;
+                }catch(Exception e){
+                    System.err.println("Peer exception: " + e.toString());
+                    e.printStackTrace();
                 }
             }
-        }catch(Exception e){
-            System.err.println("Peer exception: " + e.toString());
-            e.printStackTrace();
-        }
-        
+            
     }
 
     
