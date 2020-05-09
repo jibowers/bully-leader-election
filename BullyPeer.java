@@ -89,7 +89,7 @@ public class BullyPeer implements PeerInterface{
                     amILeader = true;
                     leaderID = myID;
                     if (!haveDeclaredMyself){ // make sure I only send out one coordination message
-                        haveDeclaredMyself = true; //might have to lock this!
+                        synchronized(this){haveDeclaredMyself = true;}//might have to lock this!
                         sendCoordination();
                     }
                 }
