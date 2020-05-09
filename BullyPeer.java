@@ -85,7 +85,7 @@ public class BullyPeer implements PeerInterface{
                 Thread.sleep(10000);
                 if (!hasReceivedReply){
                     // if not, I am leader and send out coordination message
-                    amILeader = true;
+                    //amILeader = true;
                     leaderID = myID;
                     sendCoordination();
                 }
@@ -111,17 +111,20 @@ public class BullyPeer implements PeerInterface{
     }
 
     public void sendCoordination(){
-        try{
-            for (int i = 0; i < allIPs.length; i++){
-                if (i != myID){ //send message to all neighbors but myself
-                    System.out.println("Telling Peer " + i + " that I am the leader");
-                    neighborStubs.get(i).receiveCoordination(myID);
-                    numMessagesSent ++;
+        if (!amILeader){ // helps ensure I only send out one set of coordination messages
+            try{
+                for (int i = 0; i < allIPs.length; i++){
+                    if (i != myID){ //send message to all neighbors but myself
+                        System.out.println("Telling Peer " + i + " that I am the leader");
+                        neighborStubs.get(i).receiveCoordination(myID);
+                        numMessagesSent ++;
+                    }
                 }
+                amILeader = true;
+            }catch(Exception e){
+                System.err.println("Peer exception: " + e.toString());
+                e.printStackTrace();
             }
-        }catch(Exception e){
-            System.err.println("Peer exception: " + e.toString());
-            e.printStackTrace();
         }
         
     }
