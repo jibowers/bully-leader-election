@@ -176,7 +176,7 @@ public class BullyPeer implements PeerInterface{
         			//start leader election
                         // record start time
                         p.startTime = System.currentTimeMillis();
-                        System.out.println(p.startTime);
+                        System.out.println("Start time: " + p.startTime);
                         p.sendElection();
                     }
                 }
@@ -235,7 +235,9 @@ public class BullyPeer implements PeerInterface{
         public void run(){
             leaderID = senderID;
             amILeader = false;
+            System.out.println("Peer " + leaderID + " is the leader now.");
             endTime = System.currentTimeMillis();
+            System.out.println("End time: " + endTime);
         }
     }
 }
