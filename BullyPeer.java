@@ -16,7 +16,7 @@ import java.util.concurrent.*;
 public class BullyPeer implements PeerInterface{
     // instance variables
 
-    String[] allIPs = {"18.206.215.175", "54.211.147.15", "52.207.243.243"}; // THIS NEEDS TO BE SET, and it's the same for all nodes
+    String[] allIPs = {"18.206.215.175", "54.211.147.15", "52.207.243.243", "54.198.9.88", "54.224.88.131"}; // THIS NEEDS TO BE SET, and it's the same for all nodes
 
     int myID;
     // information about the leader
