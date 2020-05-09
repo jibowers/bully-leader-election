@@ -16,7 +16,7 @@ import java.util.concurrent.*;
 public class BullyPeer implements PeerInterface{
     // instance variables
 
-    String[] allIPs; // THIS NEEDS TO BE SET, and it's the same for all nodes
+    String[] allIPs = {"18.206.215.175", "54.211.147.15", "52.207.243.243"}; // THIS NEEDS TO BE SET, and it's the same for all nodes
 
     int myID;
     // information about the leader
@@ -90,7 +90,7 @@ public class BullyPeer implements PeerInterface{
                 }
 
             }catch(Exception e){
-                System.err.println("Thread exception: " + e.toString());
+                System.err.println("Peer exception: " + e.toString());
                 e.printStackTrace();
             }
         } 
@@ -98,19 +98,31 @@ public class BullyPeer implements PeerInterface{
     
     public void sendReply(int destID){
         // 
-        System.out.println("Replying to Peer " + destID);
-        neighborStubs.get(destID).receiveReply();
-        numMessagesSent ++;
+        try{
+            System.out.println("Replying to Peer " + destID);
+            neighborStubs.get(destID).receiveReply();
+            numMessagesSent ++;
+        }catch(Exception e){
+            System.err.println("Peer exception: " + e.toString());
+            e.printStackTrace();
+        }
+        
     }
 
     public void sendCoordination(){
-        for (int i = 0; i < neighborIPs.length; i++){
-            if (i != myID){ //send message to all neighbors but myself
-                System.out.println("Telling Peer " + i + " that I am the leader");
-                neighborStubs.get(i).receiveCoordination(myID);
-                numMessagesSent ++;
+        try{
+            for (int i = 0; i < allIPs.length; i++){
+                if (i != myID){ //send message to all neighbors but myself
+                    System.out.println("Telling Peer " + i + " that I am the leader");
+                    neighborStubs.get(i).receiveCoordination(myID);
+                    numMessagesSent ++;
+                }
             }
+        }catch(Exception e){
+            System.err.println("Peer exception: " + e.toString());
+            e.printStackTrace();
         }
+        
     }
 
     
@@ -185,7 +197,10 @@ public class BullyPeer implements PeerInterface{
     }
 
     public class ReceiveElection implements Runnable{
-        public ReceiveElection(int senderID){}
+        int senderID;
+        public ReceiveElection(int senderID){
+            this.senderID = senderID;
+        }
 
         @Override
         public void run(){
@@ -208,7 +223,11 @@ public class BullyPeer implements PeerInterface{
         }
     }
     public class ReceiveCoordination implements Runnable{
-        public ReceiveCoordination(int senderID){}
+        int senderID;
+
+        public ReceiveCoordination(int senderID){
+            this.senderID = senderID;
+        }
 
         @Override
         public void run(){
