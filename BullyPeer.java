@@ -175,9 +175,17 @@ public class BullyPeer implements PeerInterface{
             while (!(input.equals("quit"))){
                 if (input.equals("help")){
                     System.out.println("Commands:\nhelp - show this message again\nconnect - connect to your neighbors"
-                    +"\ne - elect a leader");
+                    +"\ne - elect a leader\nr - de-elect leader (all peers need to do this!)");
                 }else if(input.equals("connect")){
                     connected = p.connect(p.allIPs);
+                }else if (input.equals("r")){
+                    // reset the variables
+                    p.numMessagesSent = 0;
+                    p.amILeader = false;
+                    p.leaderID = Integer.MIN_VALUE;
+                    p.haveDeclaredMyself = false;
+                    p.haveStartedElection = false;
+                    p.hasReceivedReply = false;
 
                 }else if(input.equals("e")){
         		    if (!connected){
@@ -259,6 +267,7 @@ public class BullyPeer implements PeerInterface{
             System.out.println("Peer " + leaderID + " is the leader now.");
             endTime = System.currentTimeMillis();
             System.out.println("End time: " + endTime);
+            System.out.println("Number of messages sent: " + numMessagesSent);
         }
     }
 }
