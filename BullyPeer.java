@@ -136,6 +136,7 @@ public class BullyPeer implements PeerInterface{
             System.err.println("Peer exception: " + e.toString());
             e.printStackTrace();
         }
+        System.out.println("Number of messages sent: " + numMessagesSent);
             
     }
 
