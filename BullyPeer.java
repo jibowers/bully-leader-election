@@ -35,6 +35,7 @@ public class BullyPeer implements PeerInterface{
     private ExecutorService pool;
 
     boolean hasReceivedReply;
+    boolean isFailed = false;
 
     //Hashtable<Integer, ReplyStatus> responseTracker; 
 
@@ -57,11 +58,11 @@ public class BullyPeer implements PeerInterface{
     }
 
 
-    public void receiveElection(int senderID){pool.execute(new ReceiveElection(senderID));}
+    public void receiveElection(int senderID){if (!isFailed){pool.execute(new ReceiveElection(senderID));}}
     
-    public void receiveReply(){pool.execute(new ReceiveReply());}
+    public void receiveReply(){if (!isFailed){pool.execute(new ReceiveReply());}}
 
-    public void receiveCoordination(int senderID){pool.execute(new ReceiveCoordination(senderID));}
+    public void receiveCoordination(int senderID){if (!isFailed){pool.execute(new ReceiveCoordination(senderID));}}
 
 
     public void sendElection(){
@@ -175,9 +176,9 @@ public class BullyPeer implements PeerInterface{
 	        boolean connected = false;
             while (!(input.equals("quit"))){
                 if (input.equals("help")){
-                    System.out.println("Commands:\nhelp - show this message again\nconnect - connect to your neighbors"
-                    +"\ne - elect a leader\nr - de-elect leader (all peers need to do this!)");
-                }else if(input.equals("connect")){
+                    System.out.println("Commands:\nhelp - show this message again\nc - connect to your neighbors"
+                    +"\ne - elect a leader\nr - de-elect leader (all peers need to do this!)\nf - fail this node\no - turn this node back on");
+                }else if(input.equals("c")){
                     connected = p.connect(p.allIPs);
                 }else if (input.equals("r")){
                     // reset the variables
@@ -187,7 +188,13 @@ public class BullyPeer implements PeerInterface{
                     p.haveDeclaredMyself = false;
                     p.haveStartedElection = false;
                     p.hasReceivedReply = false;
-
+                    p.isFailed = false;
+                }else if (input.equals("f")){
+                    p.isFailed = true;
+                    System.out.println("This node is failed.");
+                }else if (input.equals("o")){
+                    p.isFailed = false;
+                    System.out.println("This node was turned back on.");
                 }else if(input.equals("e")){
         		    if (!connected){
         		    	System.out.println("Please try to connect again");
